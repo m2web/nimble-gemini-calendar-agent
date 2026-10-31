@@ -1,11 +1,9 @@
 """Gemini System 2 Organizer Agent orchestrating local Ollama `nimble` (System 1) and Google Calendar."""
 
-from __future__ import annotations
-
 import json
 import sys
 from datetime import datetime
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 from .config import CATEGORY_COLORS, AgentSettings, load_criteria
 from .gcal_client import CalendarEventPayload, GoogleCalendarClient
@@ -36,7 +34,7 @@ class CalendarOrganizerAgent:
 
     def __init__(
         self,
-        settings: AgentSettings | None = None,
+        settings: Optional[AgentSettings] = None,
         dry_run: bool = False,
         save_audit_file: bool = True,
         interactive: bool = True,
@@ -259,9 +257,8 @@ class CalendarOrganizerAgent:
             "and zero-output-token System 1 telemetry."
         )
 
-        response = client.models.generate_content(
+        chat = client.chats.create(
             model=self.settings.gemini_model,
-            contents=raw_entry,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
                 tools=[
@@ -271,6 +268,7 @@ class CalendarOrganizerAgent:
                 temperature=0.1,
             ),
         )
+        response = chat.send_message(raw_entry)
 
         return {
             "raw_entry": raw_entry,

@@ -89,7 +89,7 @@ class AgentSettings:
     """Runtime configuration for the Calendar Organizer Agent."""
 
     gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")
-    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
     ollama_systemone_url: str = os.getenv(
         "OLLAMA_SYSTEMONE_URL", "http://localhost:11434/v1/systemone"
     )
