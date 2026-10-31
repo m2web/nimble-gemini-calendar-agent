@@ -1,0 +1,20 @@
+{
+    "model":  "nimble",
+    "answers":  {
+                    "label":  {
+                                  "type":  "choice",
+                                  "choice":  "leisure",
+                                  "probabilities":  {
+                                                        "family":  0.00017001836453935484,
+                                                        "leisure":  0.9989015192834459,
+                                                        "work":  0.0005284623520145124,
+                                                        "faith":  0.0004000000000002328
+                                                    },
+                                  "confidence":  0.9986522789251687
+                              }
+                },
+    "usage":  {
+                  "input_tokens":  229,
+                  "output_tokens":  0
+              }
+}

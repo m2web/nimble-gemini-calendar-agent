@@ -1,0 +1,23 @@
+# AI Agent local configuration & skills
+.agent/
+.agents/
+
+# Local environment & secrets
+.env
+*.env
+*.local
+credentials.json
+token.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
