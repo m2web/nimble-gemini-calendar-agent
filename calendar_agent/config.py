@@ -22,7 +22,7 @@ DEFAULT_CRITERIA: Dict[str, str] = {
     "family": "Wife Jackie, kids, grandkids, in-laws",
     "work": "AI Development, Team Oversight",
     "leisure": "Live music, football game, relax with friends",
-    "faith": "Church on Sundays, teaching Sunday school, church community group",
+    "faith": "Church on Sundays, teaching Sunday school, church community group, Pastor Brad",
 }
 
 

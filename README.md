@@ -45,7 +45,7 @@ Criteria are loaded from [`faith-template.json`](./faith-template.json) and mapp
 | `family` | `"Wife Jackie, kids, grandkids, in-laws"` | Peacock (Blue) | `"7"` |
 | `work` | `"AI Development, Team Oversight"` | Graphite (Gray) | `"8"` |
 | `leisure` | `"Live music, football game, relax with friends"` | Sage (Green) | `"2"` |
-| `faith` | `"Church on Sundays, teaching Sunday school, church community group"` | Grape (Purple) | `"3"` |
+| `faith` | `"Church on Sundays, teaching Sunday school, church community group, Pastor Brad"` | Grape (Purple) | `"3"` |
 
 ---
 
@@ -55,7 +55,7 @@ Criteria are loaded from [`faith-template.json`](./faith-template.json) and mapp
 
 - **Python 3.10+**
 - **Local Ollama** running with the `nimble` model serving `http://localhost:11434/v1/systemone`
-- **Gemini API Key** (`GEMINI_API_KEY`)
+- **Gemini API Key** (`GEMINI_API_KEY` from [Google AI Studio](https://aistudio.google.com/apikey), using `gemini-3.8-flash` by default)
 - **Google Calendar OAuth 2.0 Desktop Client JSON** (`credentials.json`, optional when using `--dry-run`)
 
 ### 2. Installation
@@ -65,11 +65,20 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Edit `.env` and set your `GEMINI_API_KEY` (and adjust `CONFIDENCE_THRESHOLD` or `GOOGLE_CALENDAR_ID` if needed).
+Edit `.env` and set your `GEMINI_API_KEY` (and adjust `GEMINI_MODEL`, `CONFIDENCE_THRESHOLD`, or `GOOGLE_CALENDAR_ID` if needed).
+
+### 3. Google Calendar OAuth 2.0 Setup (For Live Calendar Read/Write)
+
+1. In [Google Cloud Console](https://console.cloud.google.com/apis/library/calendar-json.googleapis.com), enable the **Google Calendar API**.
+2. Go to **Google Auth Platform -> Audience** (`https://console.cloud.google.com/auth/audience`) and under **Test users**, click **+ Add users** to add your own Google Calendar email address (required while the app is in `Testing` status to avoid `Error 403: access_denied`).
+3. Go to **APIs & Services -> Credentials**, click **+ Create Credentials -> OAuth client ID**, select **Desktop app**, and download the JSON file as `credentials.json` in the repository root.
+4. On your first live `add` or `triage` run (without `--dry-run`), a browser window will open for a one-time OAuth approval and cache `token.json` locally.
 
 ---
 
 ## :terminal: CLI Usage
+
+All subcommands support `--no-audit` (skip writing `response-<choice>-<timestamp>.json` files) and `--non-interactive` (auto-select the top probability choice when `confidence < 0.75` without waiting for terminal input).
 
 ### 1. Direct System 1 Classification (`classify`)
 
