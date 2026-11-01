@@ -1,6 +1,7 @@
 """Gemini System 2 Organizer Agent orchestrating local Ollama `nimble` (System 1) and Google Calendar."""
 
 import json
+import re
 import sys
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
@@ -8,6 +9,31 @@ from typing import Any, Callable, Dict, List, Optional
 from .config import CATEGORY_COLORS, AgentSettings, load_criteria
 from .gcal_client import CalendarEventPayload, GoogleCalendarClient
 from .nimble_classifier import NimbleClassification, classify_event_state
+
+
+def extract_recommended_category(advice: str, fallback: str) -> str:
+    """Extract the recommended category ('family', 'work', 'leisure', 'faith') from Gemini's advice."""
+    if not advice:
+        return fallback
+    valid_cats = "|".join(re.escape(k) for k in CATEGORY_COLORS.keys())
+    # 1. Explicit 'Recommended: <cat>' or bold '**<cat>**'
+    explicit = re.findall(
+        rf"(?:recommend(?:ed|ing)?[^.\n]*?\b({valid_cats})\b|\*\*({valid_cats})\*\*)",
+        advice,
+        flags=re.IGNORECASE,
+    )
+    if explicit:
+        last_match = explicit[-1]
+        chosen = (last_match[0] or last_match[1]).lower()
+        if chosen in CATEGORY_COLORS:
+            return chosen
+    # 2. Fallback to last mentioned category keyword
+    mentions = re.findall(rf"\b({valid_cats})\b", advice, flags=re.IGNORECASE)
+    if mentions:
+        chosen = mentions[-1].lower()
+        if chosen in CATEGORY_COLORS:
+            return chosen
+    return fallback
 
 
 def format_probability_bars(probabilities: Dict[str, float]) -> str:
@@ -101,7 +127,8 @@ class CalendarOrganizerAgent:
                     f"Nimble probabilities: {json.dumps(classification.probabilities)}\n"
                     f"Nimble confidence: {classification.confidence:.4f}\n\n"
                     "In 1-2 short sentences, explain why this entry straddles multiple "
-                    "categories and state which category you recommend."
+                    "categories and state which category you recommend (`family`, `work`, "
+                    "`leisure`, or `faith`). End with `Recommended: <category>`."
                 )
                 from google.genai import types
 
@@ -118,16 +145,34 @@ class CalendarOrganizerAgent:
             except Exception as exc:
                 gemini_advice = f"(Could not fetch Gemini advice: {exc})"
 
+        recommended_cat = extract_recommended_category(
+            gemini_advice, fallback=classification.choice
+        )
+        rec_color = CATEGORY_COLORS.get(
+            recommended_cat, CATEGORY_COLORS[classification.choice]
+        )
+
         if gemini_advice:
             print(f"\n[Gemini System 2 Review]\n  {gemini_advice}")
 
         if not self.interactive or not sys.stdin.isatty():
             print(
-                f"\n[Non-interactive mode] Keeping top probability choice: "
-                f"'{classification.choice}' ({classification.color_name})"
+                f"\n[Non-interactive mode] Adopting recommended category: "
+                f"'{recommended_cat}' ({rec_color.color_name})"
             )
             print("=" * 72 + "\n")
-            return classification
+            return NimbleClassification(
+                state=classification.state,
+                choice=recommended_cat,
+                confidence=classification.confidence,
+                probabilities=classification.probabilities,
+                color_id=rec_color.color_id,
+                color_name=rec_color.color_name,
+                is_high_confidence=True,
+                input_tokens=classification.input_tokens,
+                output_tokens=classification.output_tokens,
+                audit_file=classification.audit_file,
+            )
 
         categories = list(CATEGORY_COLORS.keys())
         print("\nChoose category color for this event:")
@@ -135,7 +180,7 @@ class CalendarOrganizerAgent:
             c_meta = CATEGORY_COLORS[cat]
             prob = classification.probabilities.get(cat, 0.0)
             default_marker = (
-                " (default)" if cat == classification.choice else ""
+                " (default)" if cat == recommended_cat else ""
             )
             print(
                 f"  [{idx}] {cat:<8} - {c_meta.color_name:<16} "
@@ -143,10 +188,10 @@ class CalendarOrganizerAgent:
             )
 
         raw_choice = self.input_fn(
-            f"Select [1-{len(categories)}] or press Enter for '{classification.choice}': "
+            f"Select [1-{len(categories)}] or press Enter for '{recommended_cat}': "
         ).strip()
 
-        selected_cat = classification.choice
+        selected_cat = recommended_cat
         if raw_choice.isdigit():
             idx = int(raw_choice) - 1
             if 0 <= idx < len(categories):

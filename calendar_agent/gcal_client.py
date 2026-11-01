@@ -133,7 +133,7 @@ class GoogleCalendarClient:
         created = (
             service.events()
             .insert(calendarId=self.settings.google_calendar_id, body=body)
-            .execute()
+            .execute(num_retries=3)
         )
         return {
             "dry_run": False,
@@ -204,7 +204,7 @@ class GoogleCalendarClient:
                 singleEvents=True,
                 orderBy="startTime",
             )
-            .execute()
+            .execute(num_retries=3)
         )
         items = events_result.get("items", [])
         return [
@@ -244,7 +244,7 @@ class GoogleCalendarClient:
                 eventId=event_id,
                 body=patch_body,
             )
-            .execute()
+            .execute(num_retries=3)
         )
         return {
             "dry_run": False,
