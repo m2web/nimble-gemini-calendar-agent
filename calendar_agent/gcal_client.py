@@ -107,7 +107,11 @@ class GoogleCalendarClient:
                 flow = InstalledAppFlow.from_client_secrets_file(
                     str(creds_path), SCOPES
                 )
-                creds = flow.run_local_server(port=0)
+                print(
+                    "[Google Calendar OAuth] Starting local auth server and opening browser...",
+                    flush=True,
+                )
+                creds = flow.run_local_server(port=0, open_browser=True)
 
             token_path.write_text(creds.to_json(), encoding="utf-8")
 

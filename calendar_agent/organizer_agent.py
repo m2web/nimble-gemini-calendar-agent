@@ -103,9 +103,16 @@ class CalendarOrganizerAgent:
                     "In 1-2 short sentences, explain why this entry straddles multiple "
                     "categories and state which category you recommend."
                 )
+                from google.genai import types
+
                 response = client.models.generate_content(
                     model=self.settings.gemini_model,
                     contents=prompt,
+                    config=types.GenerateContentConfig(
+                        automatic_function_calling=types.AutomaticFunctionCallingConfig(
+                            disable=True
+                        )
+                    ),
                 )
                 gemini_advice = (response.text or "").strip()
             except Exception as exc:
