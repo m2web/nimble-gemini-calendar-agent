@@ -14,8 +14,8 @@ Standard LLM pipelines burn generative tokens just to classify a string into a f
 2. **System 2 Organizer (Google Gemini via `google-genai`)**:
    - Parses unstructured natural-language notes (dates, start/end times, summaries, locations).
    - Calls the local `nimble` classifier as a tool to retrieve the category and Google Calendar `colorId`.
-   - Reviews split probabilities when `confidence < 0.75` and prompts you interactively in the terminal.
-   - Schedules or updates the color-coded event via the Google Calendar v3 API.
+   - Reviews split probabilities when `confidence < 0.75`, provides a `Recommended: <category>` judgment, and either prompts you interactively in the terminal or applies its recommendation automatically in `--non-interactive` mode.
+   - Schedules or updates the color-coded event via the Google Calendar v3 API (with automatic socket retry handling).
 
 ```mermaid
 flowchart TD
@@ -28,7 +28,7 @@ flowchart TD
     Nimble -->|"0 output tokens: choice + probabilities + confidence"| CheckConf{"Confidence >= 0.75?"}
 
     CheckConf -->|"Yes"| MapColor["Map Category -> Google Calendar colorId"]
-    CheckConf -->|"No (Ambiguous)"| PromptUser["Gemini summarizes split & prompts user in CLI"]
+    CheckConf -->|"No (Ambiguous)"| PromptUser["Gemini recommends category & prompts user (or auto-applies in --non-interactive)"]
     PromptUser --> MapColor
 
     MapColor -->|"Tool Call: create_event / update_event_color"| GCalWrite["Google Calendar API (or --dry-run preview)"]
@@ -46,6 +46,22 @@ Criteria are loaded from [`calendar_agent/config.py`](./calendar_agent/config.py
 | `work` | `"AI Development, Team Oversight"` | Graphite (Gray) | `"8"` |
 | `leisure` | `"Live music, football game, relax with friends"` | Sage (Green) | `"2"` |
 | `faith` | `"Church on Sundays, teaching Sunday school, church community group, prayer"` | Grape (Purple) | `"3"` |
+
+### Keeping Personal Criteria Private (`--skip-worktree`)
+
+To customize `DEFAULT_CRITERIA` in [`calendar_agent/config.py`](./calendar_agent/config.py) with personal family names, locations, or project keywords without ever committing them to Git, lock the file locally before editing:
+
+```bash
+git update-index --skip-worktree calendar_agent/config.py
+```
+
+### Example System 1 Wire Files
+
+The repository root includes three reference JSON files illustrating the local Ollama `/v1/systemone` wire contract:
+
+- [`example-template.json`](./example-template.json) - Input template with empty `state` and the four category `criteria` definitions.
+- [`example-payload.json`](./example-payload.json) - Populated request payload sent to `POST http://localhost:11434/v1/systemone`.
+- [`example-response.json`](./example-response.json) - Zero-output-token response containing `choice`, `confidence`, `probabilities`, and `usage`.
 
 ---
 
@@ -78,7 +94,7 @@ Edit `.env` and set your `GEMINI_API_KEY` (and adjust `GEMINI_MODEL`, `CONFIDENC
 
 ## :terminal: CLI Usage
 
-All subcommands support `--no-audit` (skip writing `response-<choice>-<timestamp>.json` files) and `--non-interactive` (auto-select the top probability choice when `confidence < 0.75` without waiting for terminal input).
+All subcommands support `--no-audit` (skip writing `response-<choice>-<timestamp>.json` files) and `--non-interactive` (auto-apply Gemini's `Recommended: <category>` when `confidence < 0.75`, or System 1's top choice in standalone `classify`, without waiting for terminal input).
 
 ### 1. Direct System 1 Classification (`classify`)
 
@@ -98,11 +114,13 @@ python -m calendar_agent add "Dinner with Jackie and the grandkids this Friday f
 
 ### 3. Triage Existing Uncolored Calendar Events (`triage`)
 
-Scan upcoming uncolored Google Calendar events, classify each with `nimble` (triggering Gemini review if `confidence < 0.75`), and patch their `colorId`:
+Scan upcoming uncolored Google Calendar events from `now` forward, classify each with `nimble` (triggering Gemini review if `confidence < 0.75`), and patch their `colorId`:
 
 ```bash
 python -m calendar_agent triage --days 14 --dry-run
 ```
+
+> **Note on Shared Calendars:** By default, `triage` operates on `GOOGLE_CALENDAR_ID=primary`. Events displayed from secondary or shared calendars require `"Make changes to events"` (`writer`) access on that specific calendar ID in order to set per-event `colorId` values via the API.
 
 ---
 
