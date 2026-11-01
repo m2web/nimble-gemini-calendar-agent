@@ -45,7 +45,7 @@ Criteria are loaded from [`faith-template.json`](./faith-template.json) and mapp
 | `family` | `"Wife Jackie, kids, grandkids, in-laws"` | Peacock (Blue) | `"7"` |
 | `work` | `"AI Development, Team Oversight"` | Graphite (Gray) | `"8"` |
 | `leisure` | `"Live music, football game, relax with friends"` | Sage (Green) | `"2"` |
-| `faith` | `"Church on Sundays, teaching Sunday school, church community group, Pastor Brad"` | Grape (Purple) | `"3"` |
+| `faith` | `"Church on Sundays, teaching Sunday school, church community group, prayer"` | Grape (Purple) | `"3"` |
 
 ---
 

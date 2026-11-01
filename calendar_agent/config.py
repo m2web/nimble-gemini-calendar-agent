@@ -22,7 +22,7 @@ DEFAULT_CRITERIA: Dict[str, str] = {
     "family": "Wife Jackie, kids, grandkids, in-laws",
     "work": "AI Development, Team Oversight",
     "leisure": "Live music, football game, relax with friends",
-    "faith": "Church on Sundays, teaching Sunday school, church community group, Pastor Brad",
+    "faith": "Church on Sundays, teaching Sunday school, church community group, prayer",
 }
 
 
@@ -67,11 +67,10 @@ CATEGORY_COLORS: Dict[str, CategoryColor] = {
 
 
 def load_criteria(template_path: Path | None = None) -> Dict[str, str]:
-    """Load the 4 category criteria from the repo's Nimble JSON template file."""
-    path = template_path or DEFAULT_TEMPLATE_PATH
-    if path.exists():
+    """Load the 4 category criteria (from DEFAULT_CRITERIA or an explicit JSON template)."""
+    if template_path is not None and template_path.exists():
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
+            data = json.loads(template_path.read_text(encoding="utf-8"))
             criteria = (
                 data.get("questions", {})
                 .get("label", {})

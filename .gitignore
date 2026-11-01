@@ -6,6 +6,8 @@
 .env
 *.env
 *.local
+*.local.json
+calendar_agent/config.py
 credentials.json
 token.json
 

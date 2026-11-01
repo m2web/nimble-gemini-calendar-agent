@@ -33,12 +33,12 @@ class TestCalendarAgent(unittest.TestCase):
         self.assertEqual(CATEGORY_COLORS["faith"].color_id, "3")
 
     def test_payload_matches_template_contract_and_64k_limit(self) -> None:
+        template_path = REPO_ROOT / "faith-template.json"
         payload = build_systemone_payload(
-            state="Preparing my Sunday school lesson and meeting with our church community group."
+            state="Preparing my Sunday school lesson and meeting with our church community group.",
+            criteria=load_criteria(template_path),
         )
-        expected = json.loads(
-            (REPO_ROOT / "faith-template.json").read_text(encoding="utf-8")
-        )
+        expected = json.loads(template_path.read_text(encoding="utf-8"))
         self.assertEqual(payload, expected)
 
         with self.assertRaises(ValueError):
