@@ -33,7 +33,7 @@ class TestCalendarAgent(unittest.TestCase):
         self.assertEqual(CATEGORY_COLORS["faith"].color_id, "3")
 
     def test_payload_matches_template_contract_and_64k_limit(self) -> None:
-        template_path = REPO_ROOT / "faith-template.json"
+        template_path = REPO_ROOT / "example-template.json"
         payload = build_systemone_payload(
             state="Preparing my Sunday school lesson and meeting with our church community group.",
             criteria=load_criteria(template_path),
@@ -44,15 +44,42 @@ class TestCalendarAgent(unittest.TestCase):
         with self.assertRaises(ValueError):
             classify_event_state("x" * 70000)
 
-    def test_classify_all_four_repo_responses(self) -> None:
+    def test_classify_all_four_categories_and_example_response(self) -> None:
+        # 1. Verify the repo's example-response.json wire file
+        example_bytes = (REPO_ROOT / "example-response.json").read_bytes()
+        mock_example = MagicMock()
+        mock_example.read.return_value = example_bytes
+        mock_example.__enter__.return_value = mock_example
+
+        with patch("urllib.request.urlopen", return_value=mock_example):
+            res = classify_event_state(state="Example faith state", save_audit_file=False)
+            self.assertEqual(res.choice, "faith")
+            self.assertEqual(res.color_id, "3")
+            self.assertTrue(res.is_high_confidence)
+            self.assertEqual(res.output_tokens, 0)
+
+        # 2. Verify all 4 category -> colorId mappings via mocked System 1 responses
         cases = [
-            ("fam-response.json", "family", "7"),
-            ("work-response.json", "work", "8"),
-            ("leisure-response.json", "leisure", "2"),
-            ("faith-response.json", "faith", "3"),
+            ("family", "7"),
+            ("work", "8"),
+            ("leisure", "2"),
+            ("faith", "3"),
         ]
-        for filename, expected_choice, expected_color_id in cases:
-            raw_bytes = (REPO_ROOT / filename).read_bytes()
+        for expected_choice, expected_color_id in cases:
+            raw_bytes = json.dumps(
+                {
+                    "model": "nimble",
+                    "answers": {
+                        "label": {
+                            "type": "choice",
+                            "choice": expected_choice,
+                            "probabilities": {expected_choice: 0.99},
+                            "confidence": 0.99,
+                        }
+                    },
+                    "usage": {"input_tokens": 230, "output_tokens": 0},
+                }
+            ).encode("utf-8")
             mock_resp = MagicMock()
             mock_resp.read.return_value = raw_bytes
             mock_resp.__enter__.return_value = mock_resp

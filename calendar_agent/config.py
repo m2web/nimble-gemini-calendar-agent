@@ -16,7 +16,7 @@ except ImportError:
     pass
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_TEMPLATE_PATH = REPO_ROOT / "faith-template.json"
+DEFAULT_TEMPLATE_PATH = REPO_ROOT / "example-template.json"
 
 DEFAULT_CRITERIA: Dict[str, str] = {
     "family": "Wife Jackie, kids, grandkids, in-laws",

@@ -38,7 +38,7 @@ flowchart TD
 
 ## :art: Category Criteria & Google Calendar Color Mapping
 
-Criteria are loaded from [`faith-template.json`](./faith-template.json) and mapped deterministically to Google Calendar event `colorId` values:
+Criteria are loaded from [`calendar_agent/config.py`](./calendar_agent/config.py) (or [`example-template.json`](./example-template.json)) and mapped deterministically to Google Calendar event `colorId` values:
 
 | Category | Nimble Criteria | Google Calendar Color | `colorId` |
 | --- | --- | --- | --- |

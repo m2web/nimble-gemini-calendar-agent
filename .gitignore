@@ -10,6 +10,7 @@
 calendar_agent/config.py
 credentials.json
 token.json
+response-*-*.json
 
 # Python
 __pycache__/
